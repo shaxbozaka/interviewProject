@@ -23,5 +23,8 @@ django-cors-headers==4.7.0
 # Environment
 python-decouple==3.8
 
+# Kafka
+kafka-python-ng==2.2.3
+
 # Server
 gunicorn==23.0.0
