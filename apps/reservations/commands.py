@@ -2,6 +2,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.exceptions import ValidationError
 
+from core.caching import cache_invalidate_pattern
 from .models import Reservation
 
 
@@ -26,6 +27,7 @@ class ReserveBookCommand:
         self.validate()
         self.book.copies_available -= 1
         self.book.save()
+        cache_invalidate_pattern('books')
         return Reservation.objects.create(
             user=self.user,
             book=self.book,
@@ -51,6 +53,7 @@ class ReturnBookCommand:
         self.reservation.save()
         self.reservation.book.copies_available += 1
         self.reservation.book.save()
+        cache_invalidate_pattern('books')
         return self.reservation
 
 

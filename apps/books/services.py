@@ -1,21 +1,31 @@
 from django.db import models
 from django.db.models import Avg, QuerySet
 
+from core.caching import cache_get, cache_set, cache_invalidate_pattern, make_cache_key
 from .models import Book, Rating
+
+BOOK_CACHE_PREFIX = 'books'
 
 
 class BookRepository:
-    """Encapsulates all Book data access logic."""
+    """Encapsulates all Book data access logic with caching."""
 
     @staticmethod
     def get_all_with_ratings() -> QuerySet:
+        """Returns annotated queryset. NOT cached (querysets are lazy)."""
         return Book.objects.annotate(
             get_rating=Avg('ratings__rate')
         )
 
     @staticmethod
     def get_by_id(book_id: int) -> Book:
-        return Book.objects.get(pk=book_id)
+        cache_key = make_cache_key(BOOK_CACHE_PREFIX, 'detail', book_id)
+        cached = cache_get(cache_key)
+        if cached is not None:
+            return cached
+        book = Book.objects.get(pk=book_id)
+        cache_set(cache_key, book, l1_ttl=60.0, l2_ttl=300)
+        return book
 
     @staticmethod
     def get_by_genre(queryset: QuerySet, genre_slug: str) -> QuerySet:
@@ -29,6 +39,9 @@ class BookRepository:
 
     @staticmethod
     def create_rating(book: Book, user, rate: int, review: str = '') -> Rating:
-        return Rating.objects.create(
+        rating = Rating.objects.create(
             book=book, user=user, rate=rate, review=review,
         )
+        # Invalidate book caches since rating affects get_rating
+        cache_invalidate_pattern(BOOK_CACHE_PREFIX)
+        return rating
