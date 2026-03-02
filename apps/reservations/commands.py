@@ -2,6 +2,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.exceptions import ValidationError
 
+from apps.notifications.tasks import send_reservation_confirmation, send_return_confirmation
 from core.caching import cache_invalidate_pattern
 from .models import Reservation
 
@@ -28,12 +29,14 @@ class ReserveBookCommand:
         self.book.copies_available -= 1
         self.book.save()
         cache_invalidate_pattern('books')
-        return Reservation.objects.create(
+        reservation = Reservation.objects.create(
             user=self.user,
             book=self.book,
             status=Reservation.Status.ACTIVE,
             due_date=timezone.now() + timedelta(days=self.loan_days),
         )
+        send_reservation_confirmation.delay(self.user.id, self.book.title)
+        return reservation
 
 
 class ReturnBookCommand:
@@ -54,6 +57,9 @@ class ReturnBookCommand:
         self.reservation.book.copies_available += 1
         self.reservation.book.save()
         cache_invalidate_pattern('books')
+        send_return_confirmation.delay(
+            self.reservation.user.id, self.reservation.book.title,
+        )
         return self.reservation
 
 
