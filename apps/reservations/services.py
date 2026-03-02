@@ -10,7 +10,7 @@ class ReservationRepository:
     def get_user_reservations(user) -> QuerySet:
         return Reservation.objects.filter(
             user=user
-        ).select_related('book', 'user')
+        ).select_related('book', 'user').order_by('-reserved_at')
 
     @staticmethod
     def get_by_id(reservation_id: int) -> Reservation:

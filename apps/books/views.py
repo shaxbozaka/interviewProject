@@ -1,5 +1,6 @@
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
@@ -10,9 +11,10 @@ from .services import BookRepository
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('name')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
+    pagination_class = PageNumberPagination
 
 
 class BookViewSet(viewsets.ModelViewSet):

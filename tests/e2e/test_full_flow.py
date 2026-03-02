@@ -214,7 +214,9 @@ class TestE2ESearchFlow:
     """Test full-text search and autocomplete endpoints."""
 
     def test_search_endpoint_with_pg_fallback(self, auth_client, book):
-        response = auth_client.get('/api/v1/search/?q=Dune')
+        from unittest.mock import patch
+        with patch('apps.search.es_client.search_books', return_value=None):
+            response = auth_client.get('/api/v1/search/?q=Dune')
         assert response.status_code == 200
         assert response.data['source'] == 'postgresql'
         assert response.data['count'] == 1
@@ -400,7 +402,9 @@ class TestE2EFullJourney:
     register → login → browse → search → reserve → rate → check analytics → return
     """
 
-    def test_complete_user_journey(self, db):
+    def test_complete_user_journey(self, db, monkeypatch):
+        from apps.search import es_client
+        monkeypatch.setattr(es_client, 'search_books', lambda query, size=20: None)
         client = APIClient()
 
         # === Setup: Register and authenticate ===
