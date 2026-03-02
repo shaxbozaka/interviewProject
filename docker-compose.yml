@@ -12,6 +12,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.settings.development
       - DB_HOST=postgres
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=amqp://library_user:library_pass@rabbitmq:5672//
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,6 +47,60 @@ services:
     volumes:
       - redis_data:/data
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: library_user
+      RABBITMQ_DEFAULT_PASS: library_pass
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  celery:
+    build: .
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - DB_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=amqp://library_user:library_pass@rabbitmq:5672//
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    build: .
+    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - DB_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=amqp://library_user:library_pass@rabbitmq:5672//
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
   nginx:
     image: nginx:alpine
     ports:
@@ -59,3 +114,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  rabbitmq_data:
