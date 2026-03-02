@@ -4,6 +4,8 @@ from rest_framework.exceptions import ValidationError
 
 from apps.notifications.tasks import send_reservation_confirmation, send_return_confirmation
 from core.caching import cache_invalidate_pattern
+from core.events import publish_event
+from apps.analytics.tasks import update_book_analytics_task
 from .models import Reservation
 
 
@@ -36,6 +38,13 @@ class ReserveBookCommand:
             due_date=timezone.now() + timedelta(days=self.loan_days),
         )
         send_reservation_confirmation.delay(self.user.id, self.book.title)
+        publish_event(
+            topic='book-events',
+            event_type='book.reserved',
+            data={'book_id': self.book.id, 'user_id': self.user.id},
+            key=str(self.book.id),
+        )
+        update_book_analytics_task.delay(self.book.id)
         return reservation
 
 
@@ -60,6 +69,13 @@ class ReturnBookCommand:
         send_return_confirmation.delay(
             self.reservation.user.id, self.reservation.book.title,
         )
+        publish_event(
+            topic='book-events',
+            event_type='book.returned',
+            data={'book_id': self.reservation.book.id, 'user_id': self.reservation.user.id},
+            key=str(self.reservation.book.id),
+        )
+        update_book_analytics_task.delay(self.reservation.book.id)
         return self.reservation
 
 

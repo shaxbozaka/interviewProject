@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models import Avg, QuerySet
 
 from core.caching import cache_get, cache_set, cache_invalidate_pattern, make_cache_key
+from core.events import publish_event
+from apps.analytics.tasks import update_book_analytics_task
 from .models import Book, Rating
 
 BOOK_CACHE_PREFIX = 'books'
@@ -44,4 +46,11 @@ class BookRepository:
         )
         # Invalidate book caches since rating affects get_rating
         cache_invalidate_pattern(BOOK_CACHE_PREFIX)
+        publish_event(
+            topic='book-events',
+            event_type='book.rated',
+            data={'book_id': book.id, 'user_id': user.id, 'rate': rate},
+            key=str(book.id),
+        )
+        update_book_analytics_task.delay(book.id)
         return rating
