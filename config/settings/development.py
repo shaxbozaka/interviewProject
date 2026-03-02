@@ -11,6 +11,7 @@ INSTALLED_APPS += [  # noqa: F405
 
 MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')  # noqa: F405
 MIDDLEWARE.append('silk.middleware.SilkyMiddleware')  # noqa: F405
+MIDDLEWARE.append('core.middleware.SlowQueryLogMiddleware')  # noqa: F405
 
 INTERNAL_IPS = ['127.0.0.1']
 

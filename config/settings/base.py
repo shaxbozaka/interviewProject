@@ -99,6 +99,33 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django.db.slow_queries': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+        'core.caching': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
+
 REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
 
 CACHES = {
