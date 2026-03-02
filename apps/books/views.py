@@ -3,7 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from .models import Genre
+from core.exports import streaming_csv_response
+from .models import Book, Genre
 from .serializers import BookSerializer, GenreSerializer, RatingSerializer
 from .services import BookRepository
 
@@ -28,6 +29,13 @@ class BookViewSet(viewsets.ModelViewSet):
         if genre:
             queryset = BookRepository.get_by_genre(queryset, genre)
         return queryset
+
+    @action(detail=False, methods=['get'], url_path='export')
+    def export_csv(self, request):
+        """Stream all books as CSV using lazy generator (code optimization demo)."""
+        queryset = Book.objects.all()
+        fields = ['title', 'author', 'isbn', 'publication_date', 'copies_total', 'copies_available']
+        return streaming_csv_response(queryset, fields, 'books_export.csv')
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def rate(self, request, pk=None):
