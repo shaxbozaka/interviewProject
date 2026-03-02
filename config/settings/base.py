@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'apps.reservations',
     'apps.notifications',
     'apps.analytics',
+    'apps.search',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -159,3 +160,6 @@ CELERY_TASK_MAX_RETRIES = 3
 
 # Kafka
 KAFKA_BOOTSTRAP_SERVERS = config('KAFKA_BOOTSTRAP_SERVERS', default='localhost:9092')
+
+# Elasticsearch
+ELASTICSEARCH_URL = config('ELASTICSEARCH_URL', default='http://localhost:9200')

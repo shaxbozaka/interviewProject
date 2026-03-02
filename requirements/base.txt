@@ -26,5 +26,8 @@ python-decouple==3.8
 # Kafka
 kafka-python-ng==2.2.3
 
+# Elasticsearch
+elasticsearch==8.13.0
+
 # Server
 gunicorn==23.0.0
