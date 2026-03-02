@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'apps.books',
     'apps.reservations',
     'apps.notifications',
+    'apps.analytics',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -155,3 +156,6 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_DEFAULT_RETRY_DELAY = 60
 CELERY_TASK_MAX_RETRIES = 3
+
+# Kafka
+KAFKA_BOOTSTRAP_SERVERS = config('KAFKA_BOOTSTRAP_SERVERS', default='localhost:9092')
