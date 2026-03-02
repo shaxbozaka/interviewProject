@@ -1,5 +1,19 @@
 import pytest
 
+from core.caching import _l1_cache
+
+
+@pytest.fixture(autouse=True)
+def _clear_caches():
+    """Clear L1 and L2 caches before each test to prevent stale data."""
+    _l1_cache.clear()
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    _l1_cache.clear()
+    cache.clear()
+
 
 @pytest.fixture
 def api_client():
