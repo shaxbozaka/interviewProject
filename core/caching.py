@@ -15,9 +15,9 @@ _l1_cache = LRUCache(capacity=256, default_ttl=60.0)
 
 def make_cache_key(prefix: str, *args, **kwargs) -> str:
     """Generate a deterministic cache key from prefix and arguments."""
-    raw = json.dumps({'args': args, 'kwargs': kwargs}, sort_keys=True, default=str)
+    raw = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True, default=str)
     hash_suffix = hashlib.md5(raw.encode()).hexdigest()[:12]
-    return f'{prefix}:{hash_suffix}'
+    return f"{prefix}:{hash_suffix}"
 
 
 def cache_get(key: str):
@@ -25,21 +25,21 @@ def cache_get(key: str):
     # Try L1 first
     value = _l1_cache.get(key)
     if value is not None:
-        logger.debug('L1 cache hit: %s', key)
-        trace_step(f'Cache L1 HIT: {key}', 'cache')
+        logger.debug("L1 cache hit: %s", key)
+        trace_step(f"Cache L1 HIT: {key}", "cache")
         return value
 
     # Try L2 (Redis)
     value = redis_cache.get(key)
     if value is not None:
-        logger.debug('L2 cache hit: %s', key)
-        trace_step(f'Cache L1 MISS → L2 (Redis) HIT: {key}', 'cache')
+        logger.debug("L2 cache hit: %s", key)
+        trace_step(f"Cache L1 MISS → L2 (Redis) HIT: {key}", "cache")
         # Promote to L1
         _l1_cache.put(key, value)
         return value
 
-    logger.debug('Cache miss: %s', key)
-    trace_step(f'Cache MISS (L1 + L2): {key}', 'cache')
+    logger.debug("Cache miss: %s", key)
+    trace_step(f"Cache MISS (L1 + L2): {key}", "cache")
     return None
 
 
@@ -63,7 +63,7 @@ def cache_invalidate_pattern(prefix: str):
     """
     _l1_cache.clear()
     try:
-        redis_cache.delete_pattern(f'{prefix}:*')
+        redis_cache.delete_pattern(f"{prefix}:*")
     except (AttributeError, Exception):
         # Fallback: django's LocMemCache doesn't support delete_pattern
         pass

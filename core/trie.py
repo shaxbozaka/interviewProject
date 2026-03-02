@@ -9,18 +9,19 @@ DSA: Trie
 
 Thread-safe via threading.Lock for concurrent read/write.
 """
+
 import threading
 from collections import deque
 
 
 class TrieNode:
-    __slots__ = ('children', 'is_end', 'weight', 'value')
+    __slots__ = ("children", "is_end", "weight", "value")
 
     def __init__(self):
-        self.children: dict[str, 'TrieNode'] = {}
+        self.children: dict[str, "TrieNode"] = {}
         self.is_end: bool = False
         self.weight: int = 0
-        self.value: str = ''
+        self.value: str = ""
 
 
 class Trie:
@@ -113,7 +114,7 @@ class Trie:
             if not node.is_end:
                 return False
             node.is_end = False
-            node.value = ''
+            node.value = ""
             node.weight = 0
             self._size -= 1
             return len(node.children) == 0

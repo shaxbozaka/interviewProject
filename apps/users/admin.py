@@ -7,8 +7,6 @@ User = get_user_model()
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ['username', 'email', 'role', 'is_active']
-    list_filter = ['role', 'is_active']
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Library', {'fields': ('role',)}),
-    )
+    list_display = ["username", "email", "role", "is_active"]
+    list_filter = ["role", "is_active"]
+    fieldsets = BaseUserAdmin.fieldsets + (("Library", {"fields": ("role",)}),)

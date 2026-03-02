@@ -4,9 +4,9 @@ from django.db import models
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        MEMBER = 'member', 'Member'
-        LIBRARIAN = 'librarian', 'Librarian'
-        ADMIN = 'admin', 'Admin'
+        MEMBER = "member", "Member"
+        LIBRARIAN = "librarian", "Librarian"
+        ADMIN = "admin", "Admin"
 
     role = models.CharField(
         max_length=20,
@@ -15,4 +15,4 @@ class User(AbstractUser):
     )
 
     class Meta:
-        db_table = 'users'
+        db_table = "users"

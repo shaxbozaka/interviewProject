@@ -85,36 +85,36 @@ class TestTokenBucket:
 class TestRateLimiter:
     def test_allow_different_keys(self):
         limiter = RateLimiter(rate=1.0, burst=2)
-        assert limiter.allow('client_a') is True
-        assert limiter.allow('client_b') is True
+        assert limiter.allow("client_a") is True
+        assert limiter.allow("client_b") is True
 
     def test_rate_limit_same_key(self):
         limiter = RateLimiter(rate=1.0, burst=2)
-        assert limiter.allow('client_a') is True
-        assert limiter.allow('client_a') is True
-        assert limiter.allow('client_a') is False
+        assert limiter.allow("client_a") is True
+        assert limiter.allow("client_a") is True
+        assert limiter.allow("client_a") is False
 
     def test_independent_buckets_per_key(self):
         limiter = RateLimiter(rate=1.0, burst=1)
-        assert limiter.allow('a') is True
-        assert limiter.allow('a') is False
-        assert limiter.allow('b') is True  # different client
+        assert limiter.allow("a") is True
+        assert limiter.allow("a") is False
+        assert limiter.allow("b") is True  # different client
 
     def test_active_clients_tracking(self):
         limiter = RateLimiter(rate=10.0, burst=10)
-        limiter.allow('a')
-        limiter.allow('b')
-        limiter.allow('c')
+        limiter.allow("a")
+        limiter.allow("b")
+        limiter.allow("c")
         assert limiter.active_clients == 3
 
     def test_cleanup_stale_buckets(self):
         limiter = RateLimiter(rate=10.0, burst=10, cleanup_interval=0.0)
-        limiter.allow('a')
-        limiter.allow('b')
+        limiter.allow("a")
+        limiter.allow("b")
         # Wait for tokens to refill to burst (making them "idle")
         time.sleep(0.2)
         # Trigger cleanup via a new request
-        limiter.allow('c')
+        limiter.allow("c")
         # a and b should be cleaned up since their buckets are full
         assert limiter.active_clients <= 3
 
@@ -125,7 +125,7 @@ class TestRateLimiter:
         def worker(client_id):
             try:
                 for _ in range(20):
-                    limiter.allow(f'client_{client_id}')
+                    limiter.allow(f"client_{client_id}")
             except Exception as e:
                 errors.append(e)
 

@@ -5,19 +5,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('books', '0002_rating'),
+        ("books", "0002_rating"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='rating',
-            name='book',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ratings', to='books.book'),
+            model_name="rating",
+            name="book",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="ratings",
+                to="books.book",
+            ),
         ),
         migrations.AddIndex(
-            model_name='rating',
-            index=models.Index(fields=['book', 'rate'], name='books_ratin_book_id_f209a4_idx'),
+            model_name="rating",
+            index=models.Index(
+                fields=["book", "rate"], name="books_ratin_book_id_f209a4_idx"
+            ),
         ),
     ]

@@ -12,9 +12,10 @@ def user_activity_event(sender, instance, created, **kwargs):
     """Publish user creation events to Kafka."""
     if created:
         from core.events import publish_event
+
         publish_event(
-            topic='user-events',
-            event_type='user.created',
-            data={'user_id': instance.id, 'username': instance.username},
+            topic="user-events",
+            event_type="user.created",
+            data={"user_id": instance.id, "username": instance.username},
             key=str(instance.id),
         )

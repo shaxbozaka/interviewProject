@@ -5,16 +5,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('books', '0005_remove_book_books_book_isbn_54becd_idx_and_more'),
-        ('reservations', '0001_initial'),
+        ("books", "0005_remove_book_books_book_isbn_54becd_idx_and_more"),
+        ("reservations", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='reservation',
-            index=models.Index(fields=['-reserved_at'], name='reservation_reserve_1d1354_idx'),
+            model_name="reservation",
+            index=models.Index(
+                fields=["-reserved_at"], name="reservation_reserve_1d1354_idx"
+            ),
         ),
     ]

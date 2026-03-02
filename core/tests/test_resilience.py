@@ -58,8 +58,8 @@ class TestCircuitBreaker:
         with pytest.raises(ValueError):
             cb.call(self._failing_func)
         time.sleep(0.15)
-        result = cb.call(lambda: 'recovered')
-        assert result == 'recovered'
+        result = cb.call(lambda: "recovered")
+        assert result == "recovered"
         assert cb.state == CircuitState.CLOSED
 
     def test_half_open_failure_reopens(self):
@@ -77,7 +77,7 @@ class TestCircuitBreaker:
             cb.call(self._failing_func)
         with pytest.raises(ValueError):
             cb.call(self._failing_func)
-        cb.call(lambda: 'ok')
+        cb.call(lambda: "ok")
         assert cb.failure_count == 0
 
     def test_manual_reset(self):
@@ -100,20 +100,20 @@ class TestCircuitBreaker:
 
     @staticmethod
     def _failing_func():
-        raise ValueError('test failure')
+        raise ValueError("test failure")
 
     @staticmethod
     def _type_error_func():
-        raise TypeError('type error')
+        raise TypeError("type error")
 
 
 class TestCircuitBreakerDecorator:
     def test_decorator_wraps_function(self):
         @circuit_breaker(failure_threshold=3)
         def my_func():
-            return 'hello'
+            return "hello"
 
-        assert my_func() == 'hello'
+        assert my_func() == "hello"
 
     def test_decorator_opens_circuit(self):
         call_count = 0
@@ -122,7 +122,7 @@ class TestCircuitBreakerDecorator:
         def my_func():
             nonlocal call_count
             call_count += 1
-            raise ValueError('fail')
+            raise ValueError("fail")
 
         with pytest.raises(ValueError):
             my_func()
@@ -135,28 +135,28 @@ class TestCircuitBreakerDecorator:
     def test_decorator_with_fallback(self):
         @circuit_breaker(
             failure_threshold=1,
-            fallback=lambda: 'fallback_value',
+            fallback=lambda: "fallback_value",
         )
         def my_func():
-            raise ValueError('fail')
+            raise ValueError("fail")
 
         with pytest.raises(ValueError):
             my_func()
         # Circuit is now open, fallback should be called
         result = my_func()
-        assert result == 'fallback_value'
+        assert result == "fallback_value"
 
     def test_breaker_attribute(self):
         @circuit_breaker(failure_threshold=5)
         def my_func():
             pass
 
-        assert hasattr(my_func, 'breaker')
+        assert hasattr(my_func, "breaker")
         assert isinstance(my_func.breaker, CircuitBreaker)
 
 
 class TestRetryWithBackoff:
-    @patch('core.resilience.time.sleep')
+    @patch("core.resilience.time.sleep")
     def test_retries_on_failure(self, mock_sleep):
         attempts = 0
 
@@ -165,45 +165,50 @@ class TestRetryWithBackoff:
             nonlocal attempts
             attempts += 1
             if attempts < 3:
-                raise ValueError('not yet')
-            return 'success'
+                raise ValueError("not yet")
+            return "success"
 
         result = flaky()
-        assert result == 'success'
+        assert result == "success"
         assert attempts == 3
 
-    @patch('core.resilience.time.sleep')
+    @patch("core.resilience.time.sleep")
     def test_raises_after_max_retries(self, mock_sleep):
         @retry_with_backoff(max_retries=2, base_delay=0.01)
         def always_fail():
-            raise ValueError('always')
+            raise ValueError("always")
 
-        with pytest.raises(ValueError, match='always'):
+        with pytest.raises(ValueError, match="always"):
             always_fail()
 
-    @patch('core.resilience.time.sleep')
+    @patch("core.resilience.time.sleep")
     def test_exponential_backoff_delays(self, mock_sleep):
         @retry_with_backoff(
-            max_retries=3, base_delay=1.0, jitter=False,
+            max_retries=3,
+            base_delay=1.0,
+            jitter=False,
         )
         def always_fail():
-            raise ValueError('fail')
+            raise ValueError("fail")
 
         with pytest.raises(ValueError):
             always_fail()
 
         delays = [call[0][0] for call in mock_sleep.call_args_list]
-        assert delays[0] == 1.0   # 1.0 * 2^0
-        assert delays[1] == 2.0   # 1.0 * 2^1
-        assert delays[2] == 4.0   # 1.0 * 2^2
+        assert delays[0] == 1.0  # 1.0 * 2^0
+        assert delays[1] == 2.0  # 1.0 * 2^1
+        assert delays[2] == 4.0  # 1.0 * 2^2
 
-    @patch('core.resilience.time.sleep')
+    @patch("core.resilience.time.sleep")
     def test_max_delay_cap(self, mock_sleep):
         @retry_with_backoff(
-            max_retries=5, base_delay=10.0, max_delay=20.0, jitter=False,
+            max_retries=5,
+            base_delay=10.0,
+            max_delay=20.0,
+            jitter=False,
         )
         def always_fail():
-            raise ValueError('fail')
+            raise ValueError("fail")
 
         with pytest.raises(ValueError):
             always_fail()
@@ -211,7 +216,7 @@ class TestRetryWithBackoff:
         delays = [call[0][0] for call in mock_sleep.call_args_list]
         assert all(d <= 20.0 for d in delays)
 
-    @patch('core.resilience.time.sleep')
+    @patch("core.resilience.time.sleep")
     def test_only_retries_expected_exceptions(self, mock_sleep):
         @retry_with_backoff(
             max_retries=3,
@@ -219,7 +224,7 @@ class TestRetryWithBackoff:
             expected_exceptions=(ValueError,),
         )
         def raise_type_error():
-            raise TypeError('wrong type')
+            raise TypeError("wrong type")
 
         with pytest.raises(TypeError):
             raise_type_error()
@@ -229,6 +234,6 @@ class TestRetryWithBackoff:
     def test_no_retry_on_success(self):
         @retry_with_backoff(max_retries=3, base_delay=0.01)
         def succeed():
-            return 'ok'
+            return "ok"
 
-        assert succeed() == 'ok'
+        assert succeed() == "ok"

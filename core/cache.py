@@ -6,7 +6,7 @@ from typing import Any
 class Node:
     """Doubly linked list node for LRU cache."""
 
-    __slots__ = ('key', 'value', 'expires_at', 'prev', 'next')
+    __slots__ = ("key", "value", "expires_at", "prev", "next")
 
     def __init__(self, key: str, value: Any, expires_at: float | None = None):
         self.key = key
@@ -35,8 +35,8 @@ class LRUCache:
         self._lock = threading.Lock()
 
         # Sentinel nodes to avoid edge cases
-        self._head = Node('', None)  # Most recently used
-        self._tail = Node('', None)  # Least recently used
+        self._head = Node("", None)  # Most recently used
+        self._tail = Node("", None)  # Least recently used
         self._head.next = self._tail
         self._tail.prev = self._head
 
@@ -141,4 +141,4 @@ class LRUCache:
         return self.get(key) is not None
 
     def __repr__(self) -> str:
-        return f'LRUCache(capacity={self.capacity}, size={self.size})'
+        return f"LRUCache(capacity={self.capacity}, size={self.size})"

@@ -11,19 +11,21 @@ def update_book_analytics(book_id: int):
     try:
         book = Book.objects.get(pk=book_id)
     except Book.DoesNotExist:
-        logger.warning('Book %d not found for analytics update', book_id)
+        logger.warning("Book %d not found for analytics update", book_id)
         return
 
     analytics, _ = BookAnalytics.objects.get_or_create(book=book)
 
     rating_data = book.ratings.aggregate(
-        avg=Avg('rate'),
-        count=Count('id'),
+        avg=Avg("rate"),
+        count=Count("id"),
     )
-    analytics.avg_rating = rating_data['avg'] or 0.0
-    analytics.total_ratings = rating_data['count']
+    analytics.avg_rating = rating_data["avg"] or 0.0
+    analytics.total_ratings = rating_data["count"]
     analytics.total_reservations = book.reservations.count()
     analytics.calculate_popularity()
     analytics.save()
 
-    logger.info('Updated analytics for book %d: score=%.2f', book_id, analytics.popularity_score)
+    logger.info(
+        "Updated analytics for book %d: score=%.2f", book_id, analytics.popularity_score
+    )

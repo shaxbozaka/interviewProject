@@ -12,7 +12,7 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-_current_trace = contextvars.ContextVar('current_trace', default=None)
+_current_trace = contextvars.ContextVar("current_trace", default=None)
 
 
 class RequestTrace:
@@ -26,9 +26,9 @@ class RequestTrace:
         self.status_code = None
         self.duration_ms = None
 
-    def step(self, msg, cat='info'):
+    def step(self, msg, cat="info"):
         elapsed = round((time.time() - self.start) * 1000, 1)
-        self.steps.append({'ms': elapsed, 'msg': msg, 'cat': cat})
+        self.steps.append({"ms": elapsed, "msg": msg, "cat": cat})
 
     def finish(self, status_code):
         self.status_code = status_code
@@ -36,14 +36,14 @@ class RequestTrace:
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'method': self.method,
-            'path': self.path,
-            'user_id': self.user_id,
-            'status': self.status_code,
-            'duration_ms': self.duration_ms,
-            'ts': self.start,
-            'steps': self.steps,
+            "id": self.id,
+            "method": self.method,
+            "path": self.path,
+            "user_id": self.user_id,
+            "status": self.status_code,
+            "duration_ms": self.duration_ms,
+            "ts": self.start,
+            "steps": self.steps,
         }
 
 
@@ -53,7 +53,7 @@ def start_trace(method, path, user_id=None):
     return trace
 
 
-def trace_step(msg, cat='info'):
+def trace_step(msg, cat="info"):
     """Add a step to the current request trace. No-op if no trace active."""
     trace = _current_trace.get()
     if trace:
@@ -79,9 +79,10 @@ def _save_trace(trace):
     """Push trace to Redis list (LIFO, capped at 200)."""
     try:
         from django_redis import get_redis_connection
-        conn = get_redis_connection('default')
-        conn.lpush('req_traces', json.dumps(trace.to_dict()))
-        conn.ltrim('req_traces', 0, 199)
+
+        conn = get_redis_connection("default")
+        conn.lpush("req_traces", json.dumps(trace.to_dict()))
+        conn.ltrim("req_traces", 0, 199)
     except Exception:
         pass  # tracing must never break the app
 
@@ -89,8 +90,9 @@ def _save_trace(trace):
 def get_recent_traces(count=50):
     try:
         from django_redis import get_redis_connection
-        conn = get_redis_connection('default')
-        raw = conn.lrange('req_traces', 0, count - 1)
+
+        conn = get_redis_connection("default")
+        raw = conn.lrange("req_traces", 0, count - 1)
         return [json.loads(r) for r in raw]
     except Exception:
         return []

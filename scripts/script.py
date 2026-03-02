@@ -1,4 +1,4 @@
-from apps.books.models import Book, Rating
+from apps.books.models import Rating
 
 ratings = [
     {"rate": 5, "book_id": 1},

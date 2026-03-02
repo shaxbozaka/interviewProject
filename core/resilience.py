@@ -9,6 +9,7 @@ Circuit Breaker states:
 Retry:
   Exponential backoff with jitter: delay = base_delay * 2^attempt + random jitter.
 """
+
 import enum
 import functools
 import logging
@@ -20,13 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 class CircuitState(enum.Enum):
-    CLOSED = 'closed'
-    OPEN = 'open'
-    HALF_OPEN = 'half_open'
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
 
 
 class CircuitBreakerError(Exception):
     """Raised when the circuit breaker is open."""
+
     pass
 
 
@@ -71,12 +73,12 @@ class CircuitBreaker:
         state = self.state
         if state == CircuitState.OPEN:
             raise CircuitBreakerError(
-                f'Circuit breaker is open (failures={self._failure_count})'
+                f"Circuit breaker is open (failures={self._failure_count})"
             )
 
         try:
             result = func(*args, **kwargs)
-        except self.expected_exceptions as e:
+        except self.expected_exceptions:
             self._on_failure()
             raise
         else:
@@ -95,7 +97,7 @@ class CircuitBreaker:
             if self._failure_count >= self.failure_threshold:
                 self._state = CircuitState.OPEN
                 logger.warning(
-                    'Circuit breaker OPEN after %d failures',
+                    "Circuit breaker OPEN after %d failures",
                     self._failure_count,
                 )
 
@@ -139,6 +141,7 @@ def circuit_breaker(
 
         wrapper.breaker = breaker
         return wrapper
+
     return decorator
 
 
@@ -154,6 +157,7 @@ def retry_with_backoff(
 
     Delay formula: min(base_delay * 2^attempt + jitter, max_delay)
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -165,16 +169,21 @@ def retry_with_backoff(
                     last_exception = e
                     if attempt == max_retries:
                         break
-                    delay = min(base_delay * (2 ** attempt), max_delay)
+                    delay = min(base_delay * (2**attempt), max_delay)
                     if jitter:
                         delay += random.uniform(0, delay * 0.1)
                     logger.warning(
-                        'Retry %d/%d for %s after %.2fs: %s',
-                        attempt + 1, max_retries, func.__name__, delay, e,
+                        "Retry %d/%d for %s after %.2fs: %s",
+                        attempt + 1,
+                        max_retries,
+                        func.__name__,
+                        delay,
+                        e,
                     )
                     time.sleep(delay)
             raise last_exception
 
         wrapper.max_retries = max_retries
         return wrapper
+
     return decorator

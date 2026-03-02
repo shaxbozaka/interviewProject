@@ -7,11 +7,12 @@ from core.middleware import SlowQueryLogMiddleware
 class TestSlowQueryLogMiddleware:
     def test_middleware_passes_response_through(self):
         factory = RequestFactory()
-        request = factory.get('/api/v1/books/')
+        request = factory.get("/api/v1/books/")
 
         def get_response(request):
             from django.http import HttpResponse
-            return HttpResponse('OK')
+
+            return HttpResponse("OK")
 
         middleware = SlowQueryLogMiddleware(get_response)
         response = middleware(request)

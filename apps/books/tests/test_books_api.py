@@ -6,17 +6,17 @@ from apps.books.models import Book
 @pytest.mark.django_db
 class TestBookAPI:
     def test_list_books_returns_200(self, api_client):
-        url = reverse('book-list')
+        url = reverse("book-list")
         response = api_client.get(url)
         assert response.status_code == 200
 
     def test_create_book(self, authenticated_client):
-        url = reverse('book-list')
+        url = reverse("book-list")
         data = {
-            'title': 'Test Book',
-            'author': 'Test Author',
-            'publication_date': '2024-01-01',
-            'available': True,
+            "title": "Test Book",
+            "author": "Test Author",
+            "publication_date": "2024-01-01",
+            "available": True,
         }
         response = authenticated_client.post(url, data)
         assert response.status_code == 201
@@ -24,28 +24,32 @@ class TestBookAPI:
 
     def test_get_book_detail(self, api_client):
         book = Book.objects.create(
-            title='Detail Book',
-            author='Author',
-            publication_date='2024-01-01',
+            title="Detail Book",
+            author="Author",
+            publication_date="2024-01-01",
         )
-        url = reverse('book-detail', kwargs={'pk': book.pk})
+        url = reverse("book-detail", kwargs={"pk": book.pk})
         response = api_client.get(url)
         assert response.status_code == 200
-        assert response.data['title'] == 'Detail Book'
+        assert response.data["title"] == "Detail Book"
 
     def test_rate_book(self, authenticated_client, user):
         book = Book.objects.create(
-            title='Rate Me', author='Author', publication_date='2024-01-01',
+            title="Rate Me",
+            author="Author",
+            publication_date="2024-01-01",
         )
-        url = reverse('book-rate', kwargs={'pk': book.pk})
-        response = authenticated_client.post(url, {'rate': 85, 'review': 'Great book!'})
+        url = reverse("book-rate", kwargs={"pk": book.pk})
+        response = authenticated_client.post(url, {"rate": 85, "review": "Great book!"})
         assert response.status_code == 201
-        assert response.data['rate'] == 85
+        assert response.data["rate"] == 85
 
     def test_rate_book_unauthenticated_fails(self, api_client):
         book = Book.objects.create(
-            title='Rate Me', author='Author', publication_date='2024-01-01',
+            title="Rate Me",
+            author="Author",
+            publication_date="2024-01-01",
         )
-        url = reverse('book-rate', kwargs={'pk': book.pk})
-        response = api_client.post(url, {'rate': 85})
+        url = reverse("book-rate", kwargs={"pk": book.pk})
+        response = api_client.post(url, {"rate": 85})
         assert response.status_code == 401

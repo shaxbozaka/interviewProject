@@ -3,6 +3,7 @@ Elasticsearch client with lazy initialization and graceful degradation.
 
 If ES is unavailable, search falls back to PostgreSQL LIKE queries.
 """
+
 import logging
 
 from django.conf import settings
@@ -12,34 +13,34 @@ logger = logging.getLogger(__name__)
 _client = None
 _available = None
 
-INDEX_NAME = 'books'
+INDEX_NAME = "books"
 
 BOOK_MAPPING = {
-    'properties': {
-        'title': {
-            'type': 'text',
-            'analyzer': 'standard',
-            'fields': {
-                'suggest': {
-                    'type': 'completion',
+    "properties": {
+        "title": {
+            "type": "text",
+            "analyzer": "standard",
+            "fields": {
+                "suggest": {
+                    "type": "completion",
                 }
-            }
+            },
         },
-        'author': {
-            'type': 'text',
-            'analyzer': 'standard',
+        "author": {
+            "type": "text",
+            "analyzer": "standard",
         },
-        'isbn': {
-            'type': 'keyword',
+        "isbn": {
+            "type": "keyword",
         },
-        'genre': {
-            'type': 'keyword',
+        "genre": {
+            "type": "keyword",
         },
-        'publication_date': {
-            'type': 'date',
+        "publication_date": {
+            "type": "date",
         },
-        'available': {
-            'type': 'boolean',
+        "available": {
+            "type": "boolean",
         },
     }
 }
@@ -54,15 +55,16 @@ def get_client():
         return _client
     try:
         from elasticsearch import Elasticsearch
-        es_url = getattr(settings, 'ELASTICSEARCH_URL', 'http://localhost:9200')
+
+        es_url = getattr(settings, "ELASTICSEARCH_URL", "http://localhost:9200")
         _client = Elasticsearch(es_url)
         _client.info()
         _available = True
-        logger.info('Elasticsearch connected at %s', es_url)
+        logger.info("Elasticsearch connected at %s", es_url)
         return _client
     except Exception as e:
         _available = False
-        logger.warning('Elasticsearch unavailable: %s', e)
+        logger.warning("Elasticsearch unavailable: %s", e)
         return None
 
 
@@ -80,11 +82,11 @@ def ensure_index():
         return False
     try:
         if not client.indices.exists(index=INDEX_NAME):
-            client.indices.create(index=INDEX_NAME, body={'mappings': BOOK_MAPPING})
-            logger.info('Created index: %s', INDEX_NAME)
+            client.indices.create(index=INDEX_NAME, body={"mappings": BOOK_MAPPING})
+            logger.info("Created index: %s", INDEX_NAME)
         return True
     except Exception as e:
-        logger.error('Failed to create index: %s', e)
+        logger.error("Failed to create index: %s", e)
         return False
 
 
@@ -95,17 +97,17 @@ def index_book(book) -> bool:
         return False
     try:
         doc = {
-            'title': book.title,
-            'author': book.author,
-            'isbn': book.isbn or '',
-            'genre': book.genre.slug if book.genre else '',
-            'publication_date': book.publication_date.isoformat(),
-            'available': book.available,
+            "title": book.title,
+            "author": book.author,
+            "isbn": book.isbn or "",
+            "genre": book.genre.slug if book.genre else "",
+            "publication_date": book.publication_date.isoformat(),
+            "available": book.available,
         }
         client.index(index=INDEX_NAME, id=str(book.id), body=doc)
         return True
     except Exception as e:
-        logger.error('Failed to index book %s: %s', book.id, e)
+        logger.error("Failed to index book %s: %s", book.id, e)
         return False
 
 
@@ -118,7 +120,7 @@ def delete_book(book_id: int) -> bool:
         client.delete(index=INDEX_NAME, id=str(book_id), ignore=[404])
         return True
     except Exception as e:
-        logger.error('Failed to delete book %s from index: %s', book_id, e)
+        logger.error("Failed to delete book %s from index: %s", book_id, e)
         return False
 
 
@@ -132,30 +134,31 @@ def search_books(query: str, limit: int = 20) -> list[int] | None:
         return None
     try:
         body = {
-            'query': {
-                'multi_match': {
-                    'query': query,
-                    'fields': ['title^2', 'author'],
-                    'fuzziness': 'AUTO',
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": ["title^2", "author"],
+                    "fuzziness": "AUTO",
                 }
             },
-            'size': limit,
+            "size": limit,
         }
         response = client.search(index=INDEX_NAME, body=body)
-        return [int(hit['_id']) for hit in response['hits']['hits']]
+        return [int(hit["_id"]) for hit in response["hits"]["hits"]]
     except Exception as e:
-        logger.error('ES search failed: %s', e)
+        logger.error("ES search failed: %s", e)
         return None
 
 
 def reindex_all():
     """Reindex all books from the database."""
     from apps.books.models import Book
+
     client = get_client()
     if client is None:
         return False
-    books = Book.objects.select_related('genre').all()
+    books = Book.objects.select_related("genre").all()
     for book in books:
         index_book(book)
-    logger.info('Reindexed %d books', books.count())
+    logger.info("Reindexed %d books", books.count())
     return True

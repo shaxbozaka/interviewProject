@@ -16,16 +16,16 @@ class NotificationFactory:
     """
 
     _strategies: dict[str, type[NotificationStrategy]] = {
-        'email': EmailNotificationStrategy,
-        'in_app': InAppNotificationStrategy,
-        'push': PushNotificationStrategy,
+        "email": EmailNotificationStrategy,
+        "in_app": InAppNotificationStrategy,
+        "push": PushNotificationStrategy,
     }
 
     @classmethod
     def create(cls, channel: str) -> NotificationStrategy:
         strategy_class = cls._strategies.get(channel)
         if strategy_class is None:
-            raise ValueError(f'Unknown notification channel: {channel}')
+            raise ValueError(f"Unknown notification channel: {channel}")
         return strategy_class()
 
     @classmethod

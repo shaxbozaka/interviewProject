@@ -5,11 +5,11 @@ from django.db import connection
 
 from core.tracing import start_trace, end_trace, trace_step, set_trace_user
 
-logger = logging.getLogger('django.db.slow_queries')
+logger = logging.getLogger("django.db.slow_queries")
 
 
 # Paths we don't trace (too noisy)
-_SKIP_PREFIXES = ('/static/', '/favicon', '/api/v1/dashboard/traces/')
+_SKIP_PREFIXES = ("/static/", "/favicon", "/api/v1/dashboard/traces/")
 
 
 class TracingMiddleware:
@@ -24,19 +24,28 @@ class TracingMiddleware:
             return self.get_response(request)
 
         user_id = None
-        if hasattr(request, 'user') and hasattr(request.user, 'id') and request.user.is_authenticated:
+        if (
+            hasattr(request, "user")
+            and hasattr(request.user, "id")
+            and request.user.is_authenticated
+        ):
             user_id = request.user.id
 
         trace = start_trace(request.method, path, user_id)
-        trace_step(f'{request.method} {path}', 'request')
+        trace_step(f"{request.method} {path}", "request")
 
         response = self.get_response(request)
 
         # Capture user_id after JWT auth middleware ran
-        if not trace.user_id and hasattr(request, 'user') and hasattr(request.user, 'id') and request.user.is_authenticated:
+        if (
+            not trace.user_id
+            and hasattr(request, "user")
+            and hasattr(request.user, "id")
+            and request.user.is_authenticated
+        ):
             set_trace_user(request.user.id)
 
-        trace_step(f'Response {response.status_code}', 'response')
+        trace_step(f"Response {response.status_code}", "response")
         end_trace(response.status_code)
         return response
 
@@ -64,21 +73,20 @@ class SlowQueryLogMiddleware:
         total_queries = len(queries)
 
         slow_queries = [
-            q for q in queries
-            if float(q.get('time', 0)) * 1000 > self.THRESHOLD_MS
+            q for q in queries if float(q.get("time", 0)) * 1000 > self.THRESHOLD_MS
         ]
 
         if slow_queries:
             for q in slow_queries:
                 logger.warning(
-                    'Slow query (%.1fms): %s',
-                    float(q['time']) * 1000,
-                    q['sql'][:200],
+                    "Slow query (%.1fms): %s",
+                    float(q["time"]) * 1000,
+                    q["sql"][:200],
                 )
 
         if total_queries > 10:
             logger.warning(
-                '%s %s — %d queries in %.1fms (possible N+1)',
+                "%s %s — %d queries in %.1fms (possible N+1)",
                 request.method,
                 request.path,
                 total_queries,

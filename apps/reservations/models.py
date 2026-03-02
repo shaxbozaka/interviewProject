@@ -4,20 +4,20 @@ from django.db import models
 
 class Reservation(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
-        ACTIVE = 'active', 'Active'
-        RETURNED = 'returned', 'Returned'
-        OVERDUE = 'overdue', 'Overdue'
+        PENDING = "pending", "Pending"
+        ACTIVE = "active", "Active"
+        RETURNED = "returned", "Returned"
+        OVERDUE = "overdue", "Overdue"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='reservations',
+        related_name="reservations",
     )
     book = models.ForeignKey(
-        'books.Book',
+        "books.Book",
         on_delete=models.CASCADE,
-        related_name='reservations',
+        related_name="reservations",
     )
     reserved_at = models.DateTimeField(auto_now_add=True)
     due_date = models.DateTimeField()
@@ -30,11 +30,11 @@ class Reservation(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['user', 'status']),
-            models.Index(fields=['book', 'status']),
-            models.Index(fields=['due_date']),
-            models.Index(fields=['-reserved_at']),
+            models.Index(fields=["user", "status"]),
+            models.Index(fields=["book", "status"]),
+            models.Index(fields=["due_date"]),
+            models.Index(fields=["-reserved_at"]),
         ]
 
     def __str__(self):
-        return f'{self.user.username} - {self.book.title} ({self.status})'
+        return f"{self.user.username} - {self.book.title} ({self.status})"

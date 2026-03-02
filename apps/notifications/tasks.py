@@ -14,18 +14,18 @@ def send_reservation_confirmation(self, user_id: int, book_title: str):
     """Send confirmation when a book is reserved."""
     try:
         user = User.objects.get(pk=user_id)
-        strategy = NotificationFactory.create('email')
+        strategy = NotificationFactory.create("email")
         strategy.send(
             recipient=user,
-            subject='Reservation Confirmed',
+            subject="Reservation Confirmed",
             message=f'You have successfully reserved "{book_title}". '
-                    f'Please return it within 14 days.',
+            f"Please return it within 14 days.",
         )
-        logger.info('Reservation confirmation sent to user %d', user_id)
+        logger.info("Reservation confirmation sent to user %d", user_id)
     except User.DoesNotExist:
-        logger.error('User %d not found for reservation confirmation', user_id)
+        logger.error("User %d not found for reservation confirmation", user_id)
     except Exception as exc:
-        logger.error('Failed to send reservation confirmation: %s', exc)
+        logger.error("Failed to send reservation confirmation: %s", exc)
         raise self.retry(exc=exc)
 
 
@@ -34,14 +34,14 @@ def send_return_confirmation(self, user_id: int, book_title: str):
     """Send confirmation when a book is returned."""
     try:
         user = User.objects.get(pk=user_id)
-        strategy = NotificationFactory.create('email')
+        strategy = NotificationFactory.create("email")
         strategy.send(
             recipient=user,
-            subject='Book Returned',
+            subject="Book Returned",
             message=f'You have returned "{book_title}". Thank you!',
         )
     except User.DoesNotExist:
-        logger.error('User %d not found for return confirmation', user_id)
+        logger.error("User %d not found for return confirmation", user_id)
     except Exception as exc:
         raise self.retry(exc=exc)
 
@@ -58,18 +58,18 @@ def check_overdue_reservations():
     overdue = Reservation.objects.filter(
         status=Reservation.Status.ACTIVE,
         due_date__lt=timezone.now(),
-    ).select_related('user', 'book')
+    ).select_related("user", "book")
 
     for reservation in overdue:
         reservation.status = Reservation.Status.OVERDUE
         reservation.save()
 
-        strategy = NotificationFactory.create('email')
+        strategy = NotificationFactory.create("email")
         strategy.send(
             recipient=reservation.user,
-            subject='Book Overdue',
+            subject="Book Overdue",
             message=f'Your reservation for "{reservation.book.title}" is overdue. '
-                    f'Please return it as soon as possible.',
+            f"Please return it as soon as possible.",
         )
 
-    logger.info('Checked overdue reservations: %d found', overdue.count())
+    logger.info("Checked overdue reservations: %d found", overdue.count())

@@ -12,6 +12,7 @@ Space complexity: O(1) per bucket, O(n) for n distinct clients
 
 Thread-safe via threading.Lock.
 """
+
 import threading
 import time
 
@@ -25,7 +26,7 @@ class TokenBucket:
         burst: Maximum tokens the bucket can hold (burst capacity)
     """
 
-    __slots__ = ('rate', 'burst', '_tokens', '_last_refill', '_lock')
+    __slots__ = ("rate", "burst", "_tokens", "_last_refill", "_lock")
 
     def __init__(self, rate: float, burst: int):
         self.rate = rate
@@ -107,7 +108,8 @@ class RateLimiter:
         self._last_cleanup = now
         # Remove buckets that are full (idle clients)
         stale_keys = [
-            key for key, bucket in self._buckets.items()
+            key
+            for key, bucket in self._buckets.items()
             if bucket.available_tokens >= bucket.burst
         ]
         for key in stale_keys:

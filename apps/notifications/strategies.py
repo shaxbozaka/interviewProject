@@ -17,6 +17,7 @@ class EmailNotificationStrategy(NotificationStrategy):
 
     def send(self, recipient, subject: str, message: str) -> bool:
         from django.core.mail import send_mail
+
         try:
             send_mail(
                 subject=subject,
@@ -24,10 +25,10 @@ class EmailNotificationStrategy(NotificationStrategy):
                 from_email=None,  # uses DEFAULT_FROM_EMAIL
                 recipient_list=[recipient.email],
             )
-            logger.info('Email sent to %s: %s', recipient.email, subject)
+            logger.info("Email sent to %s: %s", recipient.email, subject)
             return True
         except Exception as e:
-            logger.error('Failed to send email to %s: %s', recipient.email, e)
+            logger.error("Failed to send email to %s: %s", recipient.email, e)
             return False
 
 
@@ -36,8 +37,10 @@ class InAppNotificationStrategy(NotificationStrategy):
 
     def send(self, recipient, subject: str, message: str) -> bool:
         logger.info(
-            'In-app notification for %s: [%s] %s',
-            recipient.username, subject, message,
+            "In-app notification for %s: [%s] %s",
+            recipient.username,
+            subject,
+            message,
         )
         return True
 
@@ -47,7 +50,9 @@ class PushNotificationStrategy(NotificationStrategy):
 
     def send(self, recipient, subject: str, message: str) -> bool:
         logger.info(
-            'Push notification for %s: [%s] %s',
-            recipient.username, subject, message,
+            "Push notification for %s: [%s] %s",
+            recipient.username,
+            subject,
+            message,
         )
         return True
