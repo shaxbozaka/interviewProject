@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("books", "0005_remove_book_books_book_isbn_54becd_idx_and_more"),
+        ("books", "0005_add_description_and_read_url"),
         ("reservations", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
