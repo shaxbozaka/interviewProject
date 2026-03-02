@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     # Local
     'apps.users',
     'apps.books',
+    'apps.reservations',
 ]
 
 AUTH_USER_MODEL = 'users.User'
