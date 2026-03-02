@@ -28,11 +28,13 @@ INSTALLED_APPS = [
     'apps.notifications',
     'apps.analytics',
     'apps.search',
+    'apps.dashboard',
 ]
 
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
+    'core.middleware.TracingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

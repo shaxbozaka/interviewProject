@@ -5,6 +5,7 @@ import logging
 from django.core.cache import cache as redis_cache
 
 from .cache import LRUCache
+from .tracing import trace_step
 
 logger = logging.getLogger(__name__)
 
@@ -25,17 +26,20 @@ def cache_get(key: str):
     value = _l1_cache.get(key)
     if value is not None:
         logger.debug('L1 cache hit: %s', key)
+        trace_step(f'Cache L1 HIT: {key}', 'cache')
         return value
 
     # Try L2 (Redis)
     value = redis_cache.get(key)
     if value is not None:
         logger.debug('L2 cache hit: %s', key)
+        trace_step(f'Cache L1 MISS → L2 (Redis) HIT: {key}', 'cache')
         # Promote to L1
         _l1_cache.put(key, value)
         return value
 
     logger.debug('Cache miss: %s', key)
+    trace_step(f'Cache MISS (L1 + L2): {key}', 'cache')
     return None
 
 

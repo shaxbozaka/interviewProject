@@ -25,7 +25,7 @@ class BookSerializer(serializers.ModelSerializer):
         model = Book
         fields = [
             'id', 'title', 'author', 'isbn', 'publication_date',
-            'genre', 'genre_name', 'available',
+            'genre', 'genre_name', 'available', 'description', 'read_url',
             'copies_total', 'copies_available', 'get_rating',
         ]
         read_only_fields = ['id', 'get_rating', 'genre_name']

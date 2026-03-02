@@ -9,6 +9,7 @@ class TopBooksView(generics.ListAPIView):
     """CQRS read model: returns top books by popularity score."""
     serializer_class = BookAnalyticsSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         return BookAnalytics.objects.select_related('book').order_by('-popularity_score')[:20]

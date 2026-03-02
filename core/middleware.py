@@ -3,7 +3,42 @@ import time
 
 from django.db import connection
 
+from core.tracing import start_trace, end_trace, trace_step, set_trace_user
+
 logger = logging.getLogger('django.db.slow_queries')
+
+
+# Paths we don't trace (too noisy)
+_SKIP_PREFIXES = ('/static/', '/favicon', '/api/v1/dashboard/traces/')
+
+
+class TracingMiddleware:
+    """Wraps every request in a trace that captures processing steps."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path
+        if any(path.startswith(p) for p in _SKIP_PREFIXES):
+            return self.get_response(request)
+
+        user_id = None
+        if hasattr(request, 'user') and hasattr(request.user, 'id') and request.user.is_authenticated:
+            user_id = request.user.id
+
+        trace = start_trace(request.method, path, user_id)
+        trace_step(f'{request.method} {path}', 'request')
+
+        response = self.get_response(request)
+
+        # Capture user_id after JWT auth middleware ran
+        if not trace.user_id and hasattr(request, 'user') and hasattr(request.user, 'id') and request.user.is_authenticated:
+            set_trace_user(request.user.id)
+
+        trace_step(f'Response {response.status_code}', 'response')
+        end_trace(response.status_code)
+        return response
 
 
 class SlowQueryLogMiddleware:

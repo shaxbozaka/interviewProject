@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Library Management System</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--card:#161b22;--border:#30363d;--text:#c9d1d9;--text-dim:#8b949e;
+  --blue:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
+.header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:20px;font-weight:600}
+.header h1 span{color:var(--blue)}
+.header .meta{color:var(--text-dim);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:16px;padding:20px 24px;max-width:1600px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:hidden}
+.card-wide{grid-column:1/-1}
+.card h2{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h2 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green)}.dot-blue{background:var(--blue)}.dot-red{background:var(--red)}.dot-yellow{background:var(--yellow)}.dot-purple{background:var(--purple)}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.badge-green{background:rgba(63,185,80,.15);color:var(--green)}
+.badge-red{background:rgba(248,81,73,.15);color:var(--red)}
+.badge-yellow{background:rgba(210,153,34,.15);color:var(--yellow)}
+.badge-blue{background:rgba(88,166,255,.15);color:var(--blue)}
+.badge-purple{background:rgba(188,140,255,.15);color:var(--purple)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px}
+.stat-box{text-align:center;padding:12px 8px;background:var(--bg);border-radius:6px}
+.stat-box .val{font-size:24px;font-weight:700;color:var(--blue)}
+.stat-box .lbl{font-size:11px;color:var(--text-dim);text-transform:uppercase;margin-top:2px}
+.svc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.svc-row:last-child{border-bottom:none}
+.svc-name{font-weight:500}.svc-lat{color:var(--text-dim);font-size:12px}
+input,button,select{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;outline:none}
+input:focus{border-color:var(--blue)}
+button{cursor:pointer;font-weight:500;transition:background .15s}
+button:hover{background:var(--border)}
+.btn-blue{background:rgba(88,166,255,.15);border-color:var(--blue);color:var(--blue)}
+.btn-blue:hover{background:rgba(88,166,255,.3)}
+.btn-green{background:rgba(63,185,80,.15);border-color:var(--green);color:var(--green)}
+.btn-red{background:rgba(248,81,73,.15);border-color:var(--red);color:var(--red)}
+.row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.log{background:var(--bg);border-radius:6px;padding:10px;max-height:260px;overflow-y:auto;font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.8}
+.log-entry{padding:2px 0;border-bottom:1px solid rgba(48,54,61,.5)}
+.log .ts{color:var(--text-dim)}.log .act-create{color:var(--green)}.log .act-update{color:var(--yellow)}.log .act-delete{color:var(--red)}
+.book-list{max-height:200px;overflow-y:auto}
+.book-item{padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.book-item:last-child{border-bottom:none}
+.book-item .title{font-weight:500}.book-item .author{color:var(--text-dim);font-size:12px}
+.search-results{margin-top:8px}.search-results .sr{padding:6px 0;border-bottom:1px solid var(--border)}
+.sr .sr-title{color:var(--blue);font-weight:500}.sr .sr-meta{color:var(--text-dim);font-size:12px}
+.ac-list{position:absolute;background:var(--card);border:1px solid var(--border);border-radius:6px;width:100%;max-height:180px;overflow-y:auto;z-index:10;display:none}
+.ac-list .ac-item{padding:6px 10px;cursor:pointer}.ac-list .ac-item:hover{background:var(--border)}
+.ac-wrap{position:relative}
+.auth-state{padding:8px 12px;border-radius:6px;margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px}
+.auth-on{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3)}
+.auth-off{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.2)}
+.token-display{word-break:break-all;font-family:monospace;font-size:11px;color:var(--text-dim);margin-top:6px;max-height:60px;overflow:hidden}
+.rl-bar-container{display:flex;gap:4px;align-items:flex-end;height:80px;margin:8px 0}
+.rl-bar{width:6px;border-radius:2px 2px 0 0;transition:height .1s}
+.rl-ok{background:var(--green)}.rl-fail{background:var(--red)}
+.arch-services{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.arch-svc{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--bg)}
+.arch-patterns{margin-top:10px}.arch-patterns .pat{padding:4px 0;border-bottom:1px solid var(--border);font-size:12px}
+.pat .pat-name{color:var(--purple);font-weight:600}.pat .pat-loc{color:var(--text-dim)}
+.dsa-list .dsa{padding:6px 0;border-bottom:1px solid var(--border)}
+.dsa .dsa-name{color:var(--yellow);font-weight:600;font-size:13px}
+.dsa .dsa-desc{color:var(--text-dim);font-size:12px}
+.cache-meters{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.meter{background:var(--bg);border-radius:6px;padding:10px}
+.meter .meter-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+.meter .meter-val{font-size:18px;font-weight:700}
+.meter-bar{height:6px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden}
+.meter-bar-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .3s}
+.hidden{display:none}
+.reservation-form select{min-width:120px}
+.msg{padding:6px 10px;border-radius:6px;font-size:12px;margin-top:6px}
+.msg-ok{background:rgba(63,185,80,.1);color:var(--green)}.msg-err{background:rgba(248,81,73,.1);color:var(--red)}
+
+/* Trace panel */
+.traces-container{max-height:600px;overflow-y:auto}
+.trace{background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:8px;overflow:hidden}
+.trace-header{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-family:'SF Mono',Consolas,monospace;font-size:12px}
+.trace-header:hover{background:rgba(88,166,255,.05)}
+.trace-method{font-weight:700;min-width:50px}
+.trace-method.m-get{color:var(--green)}.trace-method.m-post{color:var(--yellow)}.trace-method.m-put{color:var(--blue)}.trace-method.m-delete{color:var(--red)}
+.trace-path{color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trace-status{font-weight:700;min-width:30px;text-align:right}
+.trace-status.s-2xx{color:var(--green)}.trace-status.s-3xx{color:var(--blue)}.trace-status.s-4xx{color:var(--yellow)}.trace-status.s-5xx{color:var(--red)}
+.trace-dur{color:var(--text-dim);min-width:60px;text-align:right}
+.trace-user{color:var(--purple);font-size:11px}
+.trace-time{color:var(--text-dim);font-size:11px;min-width:70px}
+.trace-steps{display:none;padding:0 12px 8px;font-family:'SF Mono',Consolas,monospace;font-size:11px;line-height:1.7}
+.trace.open .trace-steps{display:block}
+.trace-step{display:flex;gap:8px;padding:2px 0;border-bottom:1px solid rgba(48,54,61,.3)}
+.trace-step:last-child{border-bottom:none}
+.step-ms{color:var(--text-dim);min-width:55px;text-align:right}
+.step-cat{min-width:60px;font-weight:600;font-size:10px;text-transform:uppercase}
+.cat-request{color:var(--blue)}.cat-response{color:var(--blue)}
+.cat-db{color:var(--green)}.cat-cache{color:var(--yellow)}.cat-event{color:var(--purple)}
+.cat-task{color:#f78166}.cat-logic{color:var(--text)}.cat-search{color:var(--blue)}
+.cat-error{color:var(--red)}.cat-auth{color:var(--purple)}.cat-info{color:var(--text-dim)}
+.step-msg{color:var(--text)}
+.trace-arrow{color:var(--text-dim);transition:transform .15s;font-size:10px}
+.trace.open .trace-arrow{transform:rotate(90deg)}
+.trace-filter{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.trace-filter label{font-size:12px;color:var(--text-dim)}
+.trace-count{font-size:12px;color:var(--text-dim)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@media(max-width:540px){.grid{grid-template-columns:1fr;padding:12px}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><span>Library</span> Management System</h1>
+  <div class="meta">Django 6.0 &middot; DRF &middot; PostgreSQL &middot; Redis &middot; Elasticsearch &middot; Kafka &middot; Celery</div>
+</div>
+
+<div class="grid">
+
+  <!-- 1. LIVE REQUEST TRACES — full width -->
+  <div class="card card-wide" id="traces-card">
+    <h2>
+      <div class="live-dot"></div>
+      Live Request Traces
+      <span class="badge badge-green" id="trace-count">0 traces</span>
+      <span style="flex:1"></span>
+      <button class="btn-blue" onclick="loadTraces()" style="font-size:11px;padding:3px 8px">Refresh</button>
+    </h2>
+    <div class="trace-filter">
+      <label>Filter:</label>
+      <button class="btn-blue" onclick="setTraceFilter('')" style="font-size:11px;padding:2px 8px">All</button>
+      <button class="btn-green" onclick="setTraceFilter('POST')" style="font-size:11px;padding:2px 8px">POST</button>
+      <button class="btn-blue" onclick="setTraceFilter('GET')" style="font-size:11px;padding:2px 8px">GET</button>
+      <button class="btn-red" onclick="setTraceFilter('error')" style="font-size:11px;padding:2px 8px">Errors</button>
+      <span class="trace-count" id="trace-filter-info"></span>
+    </div>
+    <div class="traces-container" id="traces-container">
+      <div style="color:var(--text-dim);padding:20px;text-align:center">Loading traces... Make some requests to see them here.</div>
+    </div>
+  </div>
+
+  <!-- 2. System Health -->
+  <div class="card" id="health-card">
+    <h2><span class="dot dot-green" id="health-dot"></span>System Health <span id="health-badge" class="badge badge-green">healthy</span></h2>
+    <div id="health-services"></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text-dim)">Auto-refreshes every 10s</div>
+  </div>
+
+  <!-- 3. Stats -->
+  <div class="card">
+    <h2><span class="dot dot-blue"></span>Database Stats</h2>
+    <div class="stats-grid" id="stats-grid"></div>
+  </div>
+
+  <!-- 4. Book Catalog + Autocomplete -->
+  <div class="card">
+    <h2><span class="dot dot-purple"></span>Book Catalog <span class="badge badge-blue">Trie Autocomplete</span></h2>
+    <div class="row ac-wrap">
+      <input type="text" id="ac-input" placeholder="Search books (Trie autocomplete)..." style="flex:1">
+      <div class="ac-list" id="ac-list"></div>
+    </div>
+    <div class="book-list" id="book-list"><div style="color:var(--text-dim)">Loading...</div></div>
+  </div>
+
+  <!-- 5. Full-Text Search -->
+  <div class="card">
+    <h2><span class="dot dot-yellow"></span>Full-Text Search <span class="badge badge-yellow" id="search-engine">Elasticsearch</span></h2>
+    <div class="row">
+      <input type="text" id="search-input" placeholder="Search books..." style="flex:1">
+      <button class="btn-blue" onclick="doSearch()">Search</button>
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <!-- 6. Auth Panel -->
+  <div class="card">
+    <h2><span class="dot dot-green"></span>Authentication <span class="badge badge-blue">JWT</span></h2>
+    <div id="auth-state" class="auth-state auth-off"><span class="dot dot-red"></span> Not authenticated</div>
+    <div id="auth-forms">
+      <div class="row">
+        <input type="text" id="reg-user" placeholder="Username" style="width:120px">
+        <input type="email" id="reg-email" placeholder="Email" style="width:150px">
+        <input type="password" id="reg-pass" placeholder="Password" style="width:120px">
+        <button class="btn-green" onclick="doRegister()">Register</button>
+      </div>
+      <div class="row">
+        <input type="text" id="login-user" placeholder="Username" style="width:150px">
+        <input type="password" id="login-pass" placeholder="Password" style="width:150px">
+        <button class="btn-blue" onclick="doLogin()">Login</button>
+        <button class="btn-red" onclick="doLogout()" id="btn-logout" style="display:none">Logout</button>
+      </div>
+    </div>
+    <div id="auth-msg"></div>
+    <div id="token-display" class="token-display hidden"></div>
+  </div>
+
+  <!-- 7. Reservations -->
+  <div class="card">
+    <h2><span class="dot dot-blue"></span>Reservations <span class="badge badge-blue">Command Pattern + Celery + Kafka</span></h2>
+    <div class="row reservation-form">
+      <select id="res-book"><option value="">Select book...</option></select>
+      <button class="btn-green" onclick="doReserve()">Reserve</button>
+      <select id="res-active"><option value="">Active reservations...</option></select>
+      <button class="btn-red" onclick="doReturn()">Return</button>
+    </div>
+    <div id="res-msg"></div>
+    <div class="log" id="res-log" style="margin-top:8px;max-height:120px"></div>
+  </div>
+
+  <!-- 8. Rate Limit Demo -->
+  <div class="card">
+    <h2><span class="dot dot-red"></span>Rate Limit Demo <span class="badge badge-red">Token Bucket + Nginx</span></h2>
+    <div class="row">
+      <button class="btn-red" onclick="doRateTest()">Fire 50 Requests</button>
+      <span id="rl-status" style="font-size:12px;color:var(--text-dim)">Click to test rate limiting</span>
+    </div>
+    <div class="rl-bar-container" id="rl-bars"></div>
+    <div style="font-size:11px;color:var(--text-dim)">
+      <span style="color:var(--green)">Green</span> = 200 OK &nbsp;
+      <span style="color:var(--red)">Red</span> = 429 Rate Limited
+    </div>
+    <div id="rl-summary" style="margin-top:6px;font-size:12px"></div>
+  </div>
+
+  <!-- 9. Architecture -->
+  <div class="card">
+    <h2><span class="dot dot-purple"></span>Architecture Overview</h2>
+    <div id="arch-services" class="arch-services"></div>
+    <h3 style="font-size:12px;color:var(--text-dim);margin:10px 0 4px">Design Patterns</h3>
+    <div id="arch-patterns" class="arch-patterns"></div>
+    <h3 style="font-size:12px;color:var(--text-dim);margin:10px 0 4px">Custom Data Structures</h3>
+    <div id="arch-dsa" class="dsa-list"></div>
+  </div>
+
+  <!-- 10. Cache Stats -->
+  <div class="card">
+    <h2><span class="dot dot-yellow"></span>Cache Performance <span class="badge badge-yellow">LRU + Redis Two-Tier</span></h2>
+    <div class="cache-meters" id="cache-meters"></div>
+    <div class="row">
+      <button class="btn-blue" onclick="loadCacheStats()" style="font-size:12px">Refresh</button>
+      <button class="btn-red" onclick="doClearCache()" style="font-size:12px">Clear Cache</button>
+      <span id="cache-msg" style="font-size:12px"></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '/api/v1';
+let authToken = localStorage.getItem('jwt_token');
+let traceFilter = '';
+let allTraces = [];
+
+function headers(auth=true) {
+  const h = {'Content-Type': 'application/json'};
+  if (auth && authToken) h['Authorization'] = 'Bearer ' + authToken;
+  return h;
+}
+
+async function api(url, opts={}) {
+  const res = await fetch(url, {headers: headers(opts.auth !== false), ...opts});
+  const data = res.headers.get('content-type')?.includes('json') ? await res.json() : null;
+  return {status: res.status, data, ok: res.ok};
+}
+
+// ==================== LIVE REQUEST TRACES ====================
+function setTraceFilter(f) {
+  traceFilter = f;
+  renderTraces();
+}
+
+async function loadTraces() {
+  try {
+    const {data} = await api(API + '/dashboard/traces/?count=80', {auth: false});
+    allTraces = data || [];
+    renderTraces();
+  } catch(e) {}
+}
+
+let openTraceIds = new Set();
+
+function renderTraces() {
+  const container = document.getElementById('traces-container');
+  let traces = allTraces;
+
+  if (traceFilter === 'POST') traces = traces.filter(t => t.method === 'POST');
+  else if (traceFilter === 'GET') traces = traces.filter(t => t.method === 'GET');
+  else if (traceFilter === 'error') traces = traces.filter(t => t.status >= 400);
+
+  document.getElementById('trace-count').textContent = traces.length + ' traces';
+  document.getElementById('trace-filter-info').textContent = traceFilter ? `Showing: ${traceFilter.toUpperCase()}` : 'Showing all';
+
+  if (!traces.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);padding:20px;text-align:center">No traces yet. Make some requests (register, login, search, reserve) to see them here.</div>';
+    return;
+  }
+
+  container.innerHTML = traces.map((t, i) => {
+    const time = new Date(t.ts * 1000).toLocaleTimeString();
+    const methodClass = 'm-' + (t.method || 'get').toLowerCase();
+    const statusClass = t.status < 300 ? 's-2xx' : t.status < 400 ? 's-3xx' : t.status < 500 ? 's-4xx' : 's-5xx';
+    const stepCount = (t.steps || []).length;
+    const isOpen = openTraceIds.has(t.id);
+
+    const stepsHtml = (t.steps || []).map(s =>
+      `<div class="trace-step">
+        <span class="step-ms">+${s.ms}ms</span>
+        <span class="step-cat cat-${s.cat}">${s.cat}</span>
+        <span class="step-msg">${escHtml(s.msg)}</span>
+      </div>`
+    ).join('');
+
+    return `<div class="trace ${isOpen ? 'open' : ''}" data-tid="${t.id}">
+      <div class="trace-header" onclick="toggleTrace('${t.id}')">
+        <span class="trace-arrow">&#9654;</span>
+        <span class="trace-time">${time}</span>
+        <span class="trace-method ${methodClass}">${t.method}</span>
+        <span class="trace-path">${escHtml(t.path)}</span>
+        ${t.user_id ? `<span class="trace-user">user:${t.user_id}</span>` : ''}
+        <span class="trace-status ${statusClass}">${t.status}</span>
+        <span class="trace-dur">${t.duration_ms}ms</span>
+        <span class="badge ${stepCount > 2 ? 'badge-blue' : 'badge-green'}" style="font-size:10px">${stepCount} steps</span>
+      </div>
+      <div class="trace-steps">${stepsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTrace(id) {
+  if (openTraceIds.has(id)) openTraceIds.delete(id);
+  else openTraceIds.add(id);
+  const el = document.querySelector(`[data-tid="${id}"]`);
+  if (el) el.classList.toggle('open');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ==================== HEALTH CHECK ====================
+async function loadHealth() {
+  try {
+    const {data} = await api('/health/', {auth: false});
+    const dot = document.getElementById('health-dot');
+    const badge = document.getElementById('health-badge');
+    const container = document.getElementById('health-services');
+    badge.textContent = data.status;
+    badge.className = 'badge badge-' + (data.status === 'healthy' ? 'green' : data.status === 'degraded' ? 'yellow' : 'red');
+    dot.className = 'dot ' + (data.status === 'healthy' ? 'dot-green' : data.status === 'degraded' ? 'dot-yellow' : 'dot-red');
+    container.innerHTML = Object.entries(data.services).map(([name, s]) =>
+      `<div class="svc-row"><span class="svc-name">${name}</span><span>${s.status === 'up'
+        ? `<span class="badge badge-green">up</span> <span class="svc-lat">${s.latency_ms}ms</span>`
+        : `<span class="badge badge-red">down</span>`}</span></div>`
+    ).join('');
+  } catch(e) {
+    document.getElementById('health-services').innerHTML = '<div style="color:var(--red)">Failed to reach server</div>';
+  }
+}
+
+// ==================== STATS ====================
+async function loadStats() {
+  try {
+    const {data} = await api(API + '/dashboard/stats/', {auth: false});
+    document.getElementById('stats-grid').innerHTML = Object.entries(data).map(([k, v]) =>
+      `<div class="stat-box"><div class="val">${v.toLocaleString()}</div><div class="lbl">${k}</div></div>`
+    ).join('');
+  } catch(e) {}
+}
+
+// ==================== BOOK CATALOG ====================
+let allBooks = [];
+async function loadBooks() {
+  try {
+    const {data} = await api(API + '/books/', {auth: false});
+    const books = data.results || data;
+    allBooks = books;
+    renderBooks(books);
+    const sel = document.getElementById('res-book');
+    sel.innerHTML = '<option value="">Select book...</option>' +
+      books.filter(b => b.available).map(b => `<option value="${b.id}">${b.title}</option>`).join('');
+  } catch(e) {}
+}
+function renderBooks(books) {
+  document.getElementById('book-list').innerHTML = books.length ? books.map(b =>
+    `<div class="book-item"><div><span class="title">${b.title}</span><br><span class="author">${b.author}</span></div>
+    <span class="badge ${b.available ? 'badge-green' : 'badge-red'}">${b.available ? 'Available' : 'Unavailable'}</span></div>`
+  ).join('') : '<div style="color:var(--text-dim)">No books found</div>';
+}
+
+// Autocomplete
+let acTimer;
+document.getElementById('ac-input').addEventListener('input', function() {
+  clearTimeout(acTimer);
+  const q = this.value.trim();
+  if (q.length < 2) { document.getElementById('ac-list').style.display = 'none'; return; }
+  acTimer = setTimeout(async () => {
+    try {
+      const {data} = await api(API + '/search/autocomplete/?q=' + encodeURIComponent(q), {auth: false});
+      const list = document.getElementById('ac-list');
+      const results = data.suggestions || data.results || [];
+      if (results.length) {
+        list.innerHTML = results.map(r =>
+          `<div class="ac-item" onclick="selectAc('${String(r.title || r).replace(/'/g, "\\'")}')">${r.title || r}</div>`
+        ).join('');
+        list.style.display = 'block';
+      } else {
+        list.style.display = 'none';
+      }
+    } catch(e) { document.getElementById('ac-list').style.display = 'none'; }
+  }, 200);
+});
+function selectAc(title) {
+  document.getElementById('ac-input').value = title;
+  document.getElementById('ac-list').style.display = 'none';
+  doSearchWith(title);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ac-wrap')) document.getElementById('ac-list').style.display = 'none';
+});
+
+// ==================== FULL-TEXT SEARCH ====================
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  doSearchWith(q);
+}
+async function doSearchWith(q) {
+  try {
+    const {data} = await api(API + '/search/?q=' + encodeURIComponent(q), {auth: false});
+    const results = data.results || data;
+    const engine = document.getElementById('search-engine');
+    engine.textContent = data.source || 'Elasticsearch';
+    document.getElementById('search-results').innerHTML = results.length
+      ? results.map(r => `<div class="sr"><div class="sr-title">${r.title}</div><div class="sr-meta">${r.author || ''} ${r.isbn ? '&middot; ' + r.isbn : ''}</div></div>`).join('')
+      : '<div style="color:var(--text-dim);padding:8px 0">No results</div>';
+  } catch(e) {}
+}
+document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+// ==================== AUTH ====================
+function updateAuthUI() {
+  const state = document.getElementById('auth-state');
+  const logoutBtn = document.getElementById('btn-logout');
+  const tokenDisp = document.getElementById('token-display');
+  if (authToken) {
+    state.className = 'auth-state auth-on';
+    state.innerHTML = '<span class="dot dot-green"></span> Authenticated';
+    logoutBtn.style.display = '';
+    try {
+      const payload = JSON.parse(atob(authToken.split('.')[1]));
+      tokenDisp.textContent = 'Token payload: ' + JSON.stringify(payload, null, 2);
+      tokenDisp.classList.remove('hidden');
+      state.innerHTML += ` &mdash; user_id: ${payload.user_id}`;
+    } catch(e) {}
+    loadReservations();
+  } else {
+    state.className = 'auth-state auth-off';
+    state.innerHTML = '<span class="dot dot-red"></span> Not authenticated';
+    logoutBtn.style.display = 'none';
+    tokenDisp.classList.add('hidden');
+  }
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-user').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-pass').value;
+  if (!username || !password) return;
+  const body = {username, password};
+  if (email) body.email = email;
+  const {data, ok} = await api(API + '/users/register/', {method: 'POST', body: JSON.stringify(body), auth: false});
+  const msg = document.getElementById('auth-msg');
+  if (ok) {
+    msg.innerHTML = `<div class="msg msg-ok">Registered! Now login.</div>`;
+    document.getElementById('login-user').value = username;
+    document.getElementById('login-pass').value = password;
+    setTimeout(loadTraces, 500);
+  } else {
+    msg.innerHTML = `<div class="msg msg-err">${JSON.stringify(data)}</div>`;
+  }
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!username || !password) return;
+  const {data, ok} = await api(API + '/users/login/', {method: 'POST', body: JSON.stringify({username, password}), auth: false});
+  const msg = document.getElementById('auth-msg');
+  if (ok && data.access) {
+    authToken = data.access;
+    localStorage.setItem('jwt_token', authToken);
+    msg.innerHTML = '<div class="msg msg-ok">Login successful!</div>';
+    updateAuthUI();
+    setTimeout(loadTraces, 500);
+  } else {
+    msg.innerHTML = `<div class="msg msg-err">${JSON.stringify(data)}</div>`;
+  }
+}
+
+function doLogout() {
+  authToken = null;
+  localStorage.removeItem('jwt_token');
+  document.getElementById('auth-msg').innerHTML = '<div class="msg msg-ok">Logged out</div>';
+  document.getElementById('res-active').innerHTML = '<option value="">Active reservations...</option>';
+  updateAuthUI();
+}
+
+// ==================== RESERVATIONS ====================
+async function loadReservations() {
+  if (!authToken) return;
+  try {
+    const {data} = await api(API + '/reservations/');
+    const results = data.results || data || [];
+    const active = results.filter(r => r.status === 'active' || r.status === 'pending');
+    const sel = document.getElementById('res-active');
+    sel.innerHTML = '<option value="">Active reservations...</option>' +
+      active.map(r => `<option value="${r.id}">Reservation #${r.id} - Book ${r.book}</option>`).join('');
+  } catch(e) {}
+}
+
+async function doReserve() {
+  if (!authToken) { showResMsg('Login first', true); return; }
+  const bookId = document.getElementById('res-book').value;
+  if (!bookId) { showResMsg('Select a book', true); return; }
+  const {data, ok} = await api(API + '/reservations/', {method: 'POST', body: JSON.stringify({book: bookId})});
+  if (ok) {
+    showResMsg('Reserved! Check traces above to see the full pipeline.');
+    addResLog('RESERVE', `Book ${bookId} - Reservation #${data.id}`);
+    loadReservations();
+    loadBooks();
+    setTimeout(loadTraces, 500);
+  } else {
+    showResMsg(JSON.stringify(data), true);
+  }
+}
+
+async function doReturn() {
+  if (!authToken) { showResMsg('Login first', true); return; }
+  const resId = document.getElementById('res-active').value;
+  if (!resId) { showResMsg('Select a reservation', true); return; }
+  const {data, ok} = await api(API + `/reservations/${resId}/return_book/`, {method: 'POST', body: '{}'});
+  if (ok) {
+    showResMsg('Returned! Check traces above to see the full pipeline.');
+    addResLog('RETURN', `Reservation #${resId}`);
+    loadReservations();
+    loadBooks();
+    setTimeout(loadTraces, 500);
+  } else {
+    showResMsg(JSON.stringify(data), true);
+  }
+}
+
+function showResMsg(text, isErr=false) {
+  document.getElementById('res-msg').innerHTML = `<div class="msg ${isErr ? 'msg-err' : 'msg-ok'}">${text}</div>`;
+}
+function addResLog(action, detail) {
+  const log = document.getElementById('res-log');
+  const time = new Date().toLocaleTimeString();
+  log.innerHTML = `<div class="log-entry"><span class="ts">${time}</span> <span class="act-${action === 'RESERVE' ? 'create' : 'delete'}">${action}</span> ${detail}</div>` + log.innerHTML;
+}
+
+// ==================== RATE LIMIT ====================
+async function doRateTest() {
+  const bars = document.getElementById('rl-bars');
+  const status = document.getElementById('rl-status');
+  const summary = document.getElementById('rl-summary');
+  bars.innerHTML = '';
+  status.textContent = 'Firing requests...';
+  let ok = 0, limited = 0, results = [];
+
+  const promises = Array.from({length: 50}, (_, i) =>
+    fetch(API + '/books/', {headers: {'X-Rate-Test': 'true'}})
+      .then(r => { results[i] = r.status; return r.status; })
+      .catch(() => { results[i] = 0; return 0; })
+  );
+  await Promise.all(promises);
+
+  results.forEach(s => {
+    if (s === 200) ok++;
+    else limited++;
+    const bar = document.createElement('div');
+    bar.className = 'rl-bar ' + (s === 200 ? 'rl-ok' : 'rl-fail');
+    bar.style.height = (s === 200 ? 40 : 70) + 'px';
+    bar.title = s === 200 ? '200 OK' : s + ' Rate Limited';
+    bars.appendChild(bar);
+  });
+
+  status.textContent = 'Complete';
+  summary.innerHTML = `<span style="color:var(--green)">${ok} passed</span> &middot; <span style="color:var(--red)">${limited} rate-limited (429)</span>`;
+  setTimeout(loadTraces, 1000);
+}
+
+// ==================== ARCHITECTURE ====================
+async function loadArch() {
+  try {
+    const {data} = await api(API + '/dashboard/system-info/', {auth: false});
+    const colors = ['var(--blue)','var(--green)','var(--yellow)','var(--red)','var(--purple)','var(--blue)','var(--green)','var(--yellow)','var(--red)','var(--purple)'];
+    document.getElementById('arch-services').innerHTML = data.services.map((s, i) =>
+      `<div class="arch-svc" style="border-color:${colors[i]};color:${colors[i]}">${s}</div>`
+    ).join('');
+    document.getElementById('arch-patterns').innerHTML = data.design_patterns.map(p =>
+      `<div class="pat"><span class="pat-name">${p.name}</span> <span class="pat-loc">${p.location}</span> &mdash; ${p.purpose}</div>`
+    ).join('');
+    document.getElementById('arch-dsa').innerHTML = data.custom_dsa.map(d =>
+      `<div class="dsa"><div class="dsa-name">${d.name}</div><div class="dsa-desc">${d.location} &mdash; ${d.description}</div></div>`
+    ).join('');
+  } catch(e) {}
+}
+
+// ==================== CACHE STATS ====================
+async function loadCacheStats() {
+  try {
+    const {data} = await api(API + '/dashboard/cache-stats/', {auth: false});
+    const l1 = data.l1_cache;
+    const redis = data.redis;
+    const l1Pct = l1.capacity ? Math.round((l1.size / l1.capacity) * 100) : 0;
+    const redisHitRate = (redis.keyspace_hits + redis.keyspace_misses) > 0
+      ? Math.round((redis.keyspace_hits / (redis.keyspace_hits + redis.keyspace_misses)) * 100) : 0;
+    document.getElementById('cache-meters').innerHTML = `
+      <div class="meter"><div class="meter-label">L1 LRU Cache</div>
+        <div class="meter-val">${l1.size} <span style="font-size:12px;color:var(--text-dim)">/ ${l1.capacity}</span></div>
+        <div class="meter-bar"><div class="meter-bar-fill" style="width:${l1Pct}%;background:var(--blue)"></div></div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">TTL: ${l1.default_ttl}s &middot; ${l1Pct}% full</div>
+      </div>
+      <div class="meter"><div class="meter-label">Redis L2 Cache</div>
+        <div class="meter-val">${redis.total_keys || 0} <span style="font-size:12px;color:var(--text-dim)">keys</span></div>
+        <div class="meter-bar"><div class="meter-bar-fill" style="width:${redisHitRate}%;background:var(--green)"></div></div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Hit rate: ${redisHitRate}% &middot; Memory: ${redis.used_memory_human || 'N/A'}</div>
+      </div>
+      <div class="meter"><div class="meter-label">Redis Hits</div>
+        <div class="meter-val" style="color:var(--green)">${(redis.keyspace_hits||0).toLocaleString()}</div>
+      </div>
+      <div class="meter"><div class="meter-label">Redis Misses</div>
+        <div class="meter-val" style="color:var(--red)">${(redis.keyspace_misses||0).toLocaleString()}</div>
+      </div>`;
+  } catch(e) {}
+}
+
+async function doClearCache() {
+  const msg = document.getElementById('cache-msg');
+  msg.innerHTML = '<span style="color:var(--yellow)">Clearing...</span>';
+  try {
+    const {data, ok} = await api(API + '/dashboard/clear-cache/', {method: 'POST', auth: false});
+    if (ok) {
+      msg.innerHTML = `<span style="color:var(--green)">Cleared: ${data.l1_cleared} L1 + ${data.redis_deleted} Redis keys</span>`;
+      loadCacheStats();
+      setTimeout(loadTraces, 500);
+    } else {
+      msg.innerHTML = '<span style="color:var(--red)">Failed</span>';
+    }
+  } catch(e) {
+    msg.innerHTML = '<span style="color:var(--red)">Error</span>';
+  }
+}
+
+// ==================== INIT ====================
+updateAuthUI();
+loadHealth();
+loadStats();
+loadBooks();
+loadArch();
+loadCacheStats();
+loadTraces();
+setInterval(loadHealth, 10000);
+setInterval(loadTraces, 3000);  // auto-refresh traces every 3s
+</script>
+</body>
+</html>

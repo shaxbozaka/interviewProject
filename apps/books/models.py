@@ -18,14 +18,17 @@ class Book(models.Model):
     publication_date = models.DateField()
     genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True, blank=True, related_name='books')
     available = models.BooleanField(default=True)
+    description = models.TextField(blank=True, default='')
+    read_url = models.URLField(max_length=500, blank=True, default='')
     copies_total = models.PositiveIntegerField(default=1)
     copies_available = models.PositiveIntegerField(default=1)
 
     class Meta:
         indexes = [
-            models.Index(fields=['isbn']),
             models.Index(fields=['genre']),
             models.Index(fields=['title', 'author']),
+            models.Index(fields=['-publication_date']),
+            models.Index(fields=['available', 'copies_available']),
         ]
         constraints = [
             models.CheckConstraint(
@@ -55,6 +58,7 @@ class Rating(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['book', 'rate']),
+            models.Index(fields=['user', '-created_at']),
         ]
         constraints = [
             models.UniqueConstraint(fields=['book', 'user'], name='unique_rating_per_user'),

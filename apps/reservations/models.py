@@ -33,6 +33,7 @@ class Reservation(models.Model):
             models.Index(fields=['user', 'status']),
             models.Index(fields=['book', 'status']),
             models.Index(fields=['due_date']),
+            models.Index(fields=['-reserved_at']),
         ]
 
     def __str__(self):

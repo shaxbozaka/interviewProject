@@ -5,6 +5,8 @@ from typing import Any
 
 from django.conf import settings
 
+from .tracing import trace_step
+
 logger = logging.getLogger(__name__)
 
 _producer = None
@@ -44,10 +46,13 @@ def publish_event(topic: str, event_type: str, data: dict[str, Any], key: str | 
     producer = _get_producer()
     if producer is None:
         logger.debug('Kafka unavailable, event dropped: %s/%s', topic, event_type)
+        trace_step(f'Kafka UNAVAILABLE — event dropped: {topic}/{event_type}', 'event')
         return
     try:
         producer.send(topic, value=event, key=key)
         producer.flush(timeout=5)
         logger.info('Event published: %s/%s', topic, event_type)
+        trace_step(f'Kafka: sent {event_type} → {topic} (flushed)', 'event')
     except Exception as e:
         logger.error('Failed to publish event %s/%s: %s', topic, event_type, e)
+        trace_step(f'Kafka FAILED: {topic}/{event_type} — {e}', 'event')

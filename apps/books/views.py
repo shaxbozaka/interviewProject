@@ -4,10 +4,14 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
+from core.caching import cache_get, cache_set, make_cache_key
 from core.exports import streaming_csv_response
+from core.tracing import trace_step
 from .models import Book, Genre
 from .serializers import BookSerializer, GenreSerializer, RatingSerializer
 from .services import BookRepository
+
+BOOK_LIST_CACHE_KEY = make_cache_key('books', 'list', 'default')
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -32,6 +36,24 @@ class BookViewSet(viewsets.ModelViewSet):
             queryset = BookRepository.get_by_genre(queryset, genre)
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        # Cache the full paginated book list response
+        genre = request.query_params.get('genre')
+        page = request.query_params.get('page', '1')
+        search = request.query_params.get('search', '')
+        key = make_cache_key('books', 'list', genre or '', page, search)
+
+        cached = cache_get(key)
+        if cached is not None:
+            trace_step(f'BookViewSet.list() → CACHE HIT (L1/Redis)', 'cache')
+            return Response(cached)
+
+        trace_step('BookViewSet.list() → CACHE MISS, querying DB', 'db')
+        response = super().list(request, *args, **kwargs)
+        cache_set(key, response.data, l1_ttl=30.0, l2_ttl=120)
+        trace_step('BookViewSet.list() → cached response (L1=30s, Redis=120s)', 'cache')
+        return response
+
     @action(detail=False, methods=['get'], url_path='export')
     def export_csv(self, request):
         """Stream all books as CSV using lazy generator (code optimization demo)."""
@@ -42,6 +64,7 @@ class BookViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def rate(self, request, pk=None):
         book = self.get_object()
+        trace_step(f'BookViewSet.rate() book={book.id} "{book.title}"', 'logic')
         serializer = RatingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         rating = BookRepository.create_rating(
