@@ -12,4 +12,4 @@ class ReservationSerializer(serializers.ModelSerializer):
             'id', 'username', 'book', 'book_title',
             'reserved_at', 'due_date', 'returned_at', 'status',
         ]
-        read_only_fields = ['id', 'username', 'book_title', 'reserved_at', 'returned_at', 'status']
+        read_only_fields = ['id', 'username', 'book_title', 'reserved_at', 'due_date', 'returned_at', 'status']

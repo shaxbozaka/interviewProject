@@ -1,5 +1,6 @@
-from django.db import models
+from django.db import IntegrityError, models
 from django.db.models import Avg, QuerySet
+from rest_framework.exceptions import ValidationError
 
 from core.caching import cache_get, cache_set, cache_invalidate_pattern, make_cache_key
 from core.events import publish_event
@@ -41,9 +42,12 @@ class BookRepository:
 
     @staticmethod
     def create_rating(book: Book, user, rate: int, review: str = '') -> Rating:
-        rating = Rating.objects.create(
-            book=book, user=user, rate=rate, review=review,
-        )
+        try:
+            rating = Rating.objects.create(
+                book=book, user=user, rate=rate, review=review,
+            )
+        except IntegrityError:
+            raise ValidationError({'detail': 'You have already rated this book.'})
         # Invalidate book caches since rating affects get_rating
         cache_invalidate_pattern(BOOK_CACHE_PREFIX)
         publish_event(
