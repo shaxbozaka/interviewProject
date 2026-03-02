@@ -1,11 +1,5 @@
 from apps.books.models import Book, Rating
 
-# val = Book.objects.all()
-# # x.save()
-# for x in val:
-#     print(x)
-
-
 ratings = [
     {"rate": 5, "book_id": 1},
     {"rate": 2, "book_id": 1},

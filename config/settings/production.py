@@ -12,6 +12,6 @@ SECURE_HSTS_SECONDS = 31536000
 
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    cast=lambda v: [s.strip() for s in v.split(',')],
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()],
     default='',
 )

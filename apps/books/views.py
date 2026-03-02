@@ -16,5 +16,3 @@ class BookViewSet(viewsets.ModelViewSet):
         return Book.objects.annotate(
             get_rating=Avg('ratings__rate')
         ).order_by(*self.ordering)
-    
-    

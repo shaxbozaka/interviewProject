@@ -1,5 +1,5 @@
 """
-WSGI config for hello project.
+WSGI config for library management project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
