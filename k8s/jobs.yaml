@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: library
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: library-web:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "manage.py", "migrate", "--noinput"]
+          envFrom:
+            - configMapRef:
+                name: library-config
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: library-secrets
+                  key: SECRET_KEY
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: library-secrets
+                  key: DB_PASSWORD
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-seed
+  namespace: library
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: library-web:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "scripts/seed_massive.py"]
+          envFrom:
+            - configMapRef:
+                name: library-config
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: library-secrets
+                  key: SECRET_KEY
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: library-secrets
+                  key: DB_PASSWORD
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: es-reindex
+  namespace: library
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: reindex
+          image: library-web:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "manage.py", "reindex_books"]
+          envFrom:
+            - configMapRef:
+                name: library-config
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: library-secrets
+                  key: SECRET_KEY
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: library-secrets
+                  key: DB_PASSWORD
