@@ -10,7 +10,7 @@ class TestBookAPI:
         response = api_client.get(url)
         assert response.status_code == 200
 
-    def test_create_book(self, api_client):
+    def test_create_book(self, authenticated_client):
         url = reverse('book-list')
         data = {
             'title': 'Test Book',
@@ -18,7 +18,7 @@ class TestBookAPI:
             'publication_date': '2024-01-01',
             'available': True,
         }
-        response = api_client.post(url, data)
+        response = authenticated_client.post(url, data)
         assert response.status_code == 201
         assert Book.objects.count() == 1
 
@@ -32,3 +32,20 @@ class TestBookAPI:
         response = api_client.get(url)
         assert response.status_code == 200
         assert response.data['title'] == 'Detail Book'
+
+    def test_rate_book(self, authenticated_client, user):
+        book = Book.objects.create(
+            title='Rate Me', author='Author', publication_date='2024-01-01',
+        )
+        url = reverse('book-rate', kwargs={'pk': book.pk})
+        response = authenticated_client.post(url, {'rate': 85, 'review': 'Great book!'})
+        assert response.status_code == 201
+        assert response.data['rate'] == 85
+
+    def test_rate_book_unauthenticated_fails(self, api_client):
+        book = Book.objects.create(
+            title='Rate Me', author='Author', publication_date='2024-01-01',
+        )
+        url = reverse('book-rate', kwargs={'pk': book.pk})
+        response = api_client.post(url, {'rate': 85})
+        assert response.status_code == 401
