@@ -78,3 +78,28 @@ class TestReservationAPI:
         response = api_client.get(url)
         assert response.status_code == 200
         assert len(response.data['results']) == 1
+
+    def test_extend_reservation(self, authenticated_client, user):
+        book = Book.objects.create(
+            title='Test Book', author='Author',
+            publication_date='2024-01-01', copies_available=3, copies_total=3,
+        )
+        reservation = Reservation.objects.create(
+            user=user, book=book, status='active',
+            due_date='2024-02-01T00:00:00Z',
+        )
+        url = reverse('reservation-extend', kwargs={'pk': reservation.pk})
+        response = authenticated_client.post(url, {'days': 7})
+        assert response.status_code == 200
+
+    def test_duplicate_active_reservation_fails(self, authenticated_client, user):
+        book = Book.objects.create(
+            title='Test Book', author='Author',
+            publication_date='2024-01-01', copies_available=3, copies_total=3,
+        )
+        # First reservation succeeds
+        url = reverse('reservation-list')
+        authenticated_client.post(url, {'book': book.pk, 'due_date': '2024-02-01T00:00:00Z'})
+        # Second reservation for same book fails
+        response = authenticated_client.post(url, {'book': book.pk, 'due_date': '2024-03-01T00:00:00Z'})
+        assert response.status_code == 400
