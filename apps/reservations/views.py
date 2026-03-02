@@ -1,13 +1,11 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.utils import timezone
-from datetime import timedelta
 
-from .models import Reservation
+from .commands import ReserveBookCommand, ReturnBookCommand, ExtendReservationCommand
 from .serializers import ReservationSerializer
+from .services import ReservationRepository
 
 
 class ReservationViewSet(viewsets.ModelViewSet):
@@ -15,33 +13,25 @@ class ReservationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Reservation.objects.filter(
-            user=self.request.user
-        ).select_related('book', 'user')
+        return ReservationRepository.get_user_reservations(self.request.user)
 
     def perform_create(self, serializer):
         book = serializer.validated_data['book']
-        if book.copies_available <= 0:
-            raise ValidationError({'book': 'No copies available.'})
-        book.copies_available -= 1
-        book.save()
-        serializer.save(
-            user=self.request.user,
-            status=Reservation.Status.ACTIVE,
-            due_date=timezone.now() + timedelta(days=14),
-        )
+        command = ReserveBookCommand(user=self.request.user, book=book)
+        reservation = command.execute()
+        serializer.instance = reservation
 
     @action(detail=True, methods=['post'])
     def return_book(self, request, pk=None):
         reservation = self.get_object()
-        if reservation.status == Reservation.Status.RETURNED:
-            return Response(
-                {'detail': 'Book already returned.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        reservation.status = Reservation.Status.RETURNED
-        reservation.returned_at = timezone.now()
-        reservation.save()
-        reservation.book.copies_available += 1
-        reservation.book.save()
-        return Response(ReservationSerializer(reservation).data)
+        command = ReturnBookCommand(reservation)
+        result = command.execute()
+        return Response(ReservationSerializer(result).data)
+
+    @action(detail=True, methods=['post'])
+    def extend(self, request, pk=None):
+        reservation = self.get_object()
+        days = int(request.data.get('days', 7))
+        command = ExtendReservationCommand(reservation, extra_days=days)
+        result = command.execute()
+        return Response(ReservationSerializer(result).data)

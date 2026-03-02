@@ -2,10 +2,10 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from django.db.models import Avg
 
-from .models import Book, Genre
+from .models import Genre
 from .serializers import BookSerializer, GenreSerializer, RatingSerializer
+from .services import BookRepository
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -23,12 +23,10 @@ class BookViewSet(viewsets.ModelViewSet):
     ordering = ['-publication_date']
 
     def get_queryset(self):
-        queryset = Book.objects.annotate(
-            get_rating=Avg('ratings__rate')
-        )
+        queryset = BookRepository.get_all_with_ratings()
         genre = self.request.query_params.get('genre')
         if genre:
-            queryset = queryset.filter(genre__slug=genre)
+            queryset = BookRepository.get_by_genre(queryset, genre)
         return queryset
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
@@ -36,5 +34,9 @@ class BookViewSet(viewsets.ModelViewSet):
         book = self.get_object()
         serializer = RatingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(book=book, user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        rating = BookRepository.create_rating(
+            book=book, user=request.user,
+            rate=serializer.validated_data['rate'],
+            review=serializer.validated_data.get('review', ''),
+        )
+        return Response(RatingSerializer(rating).data, status=status.HTTP_201_CREATED)
