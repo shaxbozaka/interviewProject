@@ -46,6 +46,16 @@ services:
     volumes:
       - redis_data:/data
 
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./staticfiles:/app/staticfiles
+    depends_on:
+      - web
+
 volumes:
   postgres_data:
   redis_data:
