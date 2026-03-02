@@ -38,6 +38,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [],
 }
 
 # Celery: run tasks synchronously in tests
