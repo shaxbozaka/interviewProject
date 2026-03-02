@@ -12,6 +12,7 @@ redis==5.2.1
 
 # Celery
 celery[redis]==5.4.0
+django-celery-beat==2.9.0
 
 # JWT Auth
 djangorestframework-simplejwt==5.4.0

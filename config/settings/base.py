@@ -19,11 +19,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_extensions',
+    'django_celery_beat',
 
     # Local
     'apps.users',
     'apps.books',
     'apps.reservations',
+    'apps.notifications',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -137,3 +139,19 @@ CACHES = {
         }
     }
 }
+
+# Celery
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='amqp://guest:guest@localhost:5672//')
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# Dead letter queue
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_TASK_DEFAULT_RETRY_DELAY = 60
+CELERY_TASK_MAX_RETRIES = 3
